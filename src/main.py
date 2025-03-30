@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 
 api = FastAPI(
-    title="Restaurant API",
+    title="Recipes Manager API",
     swagger_ui_parameters=swagger_ui_parameters,
     openapi_tags=TAGS_METADATA,
     lifespan=lifespan,
