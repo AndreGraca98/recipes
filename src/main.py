@@ -1,13 +1,17 @@
 import logging
+from contextlib import asynccontextmanager
 
+import sqlalchemy
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from sqlmodel import SQLModel
 
-from src.routers import ROUTERS, TAGS_METADATA
-
+from .routers import ROUTERS, TAGS_METADATA
 from .utils import Environment, getLogger
-from .utils.responses import ExceptionJSONResponse
+from .utils.exception_handlers import handle_integrity_error
+from .utils.responses import ServerExceptionResponse
+from .utils.session import engine
 
 _log = getLogger(__name__)
 
@@ -20,10 +24,20 @@ swagger_ui_parameters = {
     "defaultModelsExpandDepth": -1,  # Hide models section by default
     "docExpansion": "none",  # Collapse all sections by default
 }
+
+
+# Create the SQLmodels
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    SQLModel.metadata.create_all(engine)
+    yield
+
+
 api = FastAPI(
-    title="API",
+    title="Restaurant API",
     swagger_ui_parameters=swagger_ui_parameters,
     openapi_tags=TAGS_METADATA,
+    lifespan=lifespan,
 )
 """The global FastAPI instance"""
 
@@ -48,9 +62,11 @@ async def exception_handling_middleware(request: Request, call_next):
     # except ... as e: # Add other exceptions here. using dataclasses can have custom
     # data passed to the error details
     #     ...
+    except sqlalchemy.exc.IntegrityError as e:
+        return handle_integrity_error(e, ctx)
     except Exception as e:
-        _log.exception(str(e))
-        return ExceptionJSONResponse(status_code=500, error=e, error_details=ctx)
+        # _log.exception(str(e))
+        return ServerExceptionResponse(error=e, error_details=ctx)
 
 
 # Include all routers in the APP

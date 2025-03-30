@@ -1,22 +1,21 @@
-from typing import Any, Generator
+from typing import Annotated, Any, Generator
 
+from fastapi import Depends
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlmodel import Session
 
 from .env import Environment
 
-__all__ = ["getSession"]
+__all__ = ["get_session", "SessionDependency"]
 
 engine = create_engine(Environment().DATABASE_URL)
 """The SQLAlchemy engine to use for database operations"""
 
-SessionMaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
-def getSession() -> Generator[Session, Any, None]:
+def get_session() -> Generator[Session, Any, None]:
     """Get a database session"""
-    session = SessionMaker()
-    try:
+    with Session(engine) as session:
         yield session
-    finally:
-        session.close()
+
+
+SessionDependency = Annotated[Session, Depends(get_session)]

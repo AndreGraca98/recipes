@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.13
 
 # Production stage image
 FROM python:${PYTHON_VERSION}-alpine AS builder
@@ -17,7 +17,6 @@ RUN --mount=type=cache,sharing=locked,id=${TARGETARCH}/var/cache/apk,target=/var
 COPY ${PRJ_PATH}/pyproject.toml ${PRJ_PATH}/pdm.lock ${PRJ_PATH}/pdm.toml ${PRJ_PATH}/README.md ./
 RUN --mount=type=cache,target=/root/.cache/pdm,sharing=locked \
     pdm sync -G db --no-editable -v
-    # pdm sync --prod --no-editable -v
 
 
 # Production stage runner
