@@ -1,0 +1,44 @@
+# Install pre-commit with: $ pre-commit install
+# Install pre-push with: $ pre-commit install --hook-type pre-push
+# Run pre-commit: $ pre-commit run -a
+# Run pre-push: $ pre-commit run -a --hook pre-push
+# For more information, see https://pre-commit.com
+
+default_language_version:
+  python: python3.13
+# fail_fast: true # stop on first error
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-ast
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: pretty-format-json
+        args: [--autofix, --indent=2, --no-ensure-ascii, --no-sort-keys]
+        files: ^.*\.json$
+      - id: check-executables-have-shebangs
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "1.8.0"
+    hooks:
+      - id: pyproject-fmt
+        name: Format pyproject
+
+  # Lint python files
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.3
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
+
+  # - repo: local
+  #   hooks:
+  #     - id: run-tests
+  #       name: Run tests
+  #       entry: bash -c 'pdm test'
+  #       language: system
+  #       stages: [push]

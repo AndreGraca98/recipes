@@ -1,0 +1,59 @@
+[project]
+name = "recipes"
+version = "0.1.0"
+description = "FastAPI template for PDM package"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "André Graça", email = "andrepgraca+fastapitemplate@gmail.com"},
+    {name = "André Graça", email = "andrepgraca@gmail.com"},
+]
+requires-python = "==3.13.*"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+  "environs==14.1.1",
+  "fastapi==0.115.12",
+  "uvicorn==0.34",
+]
+[project.optional-dependencies]
+db = [
+  "cryptography==44.0.2",
+  "pymysql==1.1.1",
+  "sqlalchemy==2.0.40",
+  "sqlmodel==0.0.24",
+]
+lint = [
+  "ruff==0.11.2",
+]
+notebook = [
+  "jupyter==1.1.1",
+]
+test = [
+  "coverage==7.8",
+  "pytest==8.3.5",
+  "pytest-asyncio==0.26",
+]
+
+[tool.pdm]
+distribution = false
+
+
+[tool.pdm.scripts]
+lint = {composite=[
+    "ruff check . --fix",
+    "ruff format .",
+], help="Run the linter"}
+test = {cmd="pytest -vvv", help="Run the tests"}
+cov = {composite=[
+    "coverage run --rcfile setup.cfg -m pytest -qqq",
+    "coverage html --rcfile setup.cfg",
+    "coverage xml --rcfile setup.cfg",
+    "coverage report --rcfile setup.cfg",
+], help="Run the coverage"}
+
+[dependency-groups]
+dev = [
+    "pre-commit==4.2.0",
+]

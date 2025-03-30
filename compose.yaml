@@ -1,0 +1,46 @@
+services:
+  api:
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    env_file:
+      - .env
+    ports:
+      - ${API_PORT:-8999}:80
+    depends_on:
+      db:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync+restart
+          path: src
+          target: /app/src
+        - action: sync
+          path: assets
+          target: /app/assets
+        - action: sync
+          path: public
+          target: /app/public
+        - action: rebuild
+          path: pdm.lock
+
+  db:
+    restart: on-failure
+    image: mysql:8.0
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-root}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-bruhh}
+    ports:
+      - ${DB_PORT:-3366}:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./docker-storage/mysql:/var/lib/mysql
