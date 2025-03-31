@@ -1,16 +1,24 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile
 from sqlmodel import Session, select
 
 from src.models import Ingredient
-from src.models.ingredient import IngredientCreate, IngredientPublic, IngredientUpdate
+from src.models.ingredient import (
+    IngredientCreate,
+    IngredientPublic,
+    IngredientUpdate,
+)
 from src.routers import _tags
 from src.utils import SessionDependency, get_session, getLogger
-from src.utils.filestore import FileType, upload_to_filestore
-from src.utils.responses import NotFoundResponse
+from src.utils.filestore import FileType, download_object, upload_to_filestore
+from src.utils.responses import (
+    BadRequestResponse,
+    NotFoundResponse,
+)
 
+from ...utils.responses.success import SelfDestructFileResponse
 from .helpers import normalize_str
 
 _log = getLogger(__name__)
@@ -59,6 +67,26 @@ async def get_an_ingredient(ingredient_id: uuid.UUID, session: SessionDependency
     if not (ingredient := session.get(Ingredient, ingredient_id)):
         return IngredientNotFoundResponse
     return ingredient
+
+
+@router_v1.get("/{ingredient_id}/image")
+async def get_an_ingredient_image(
+    ingredient_id: uuid.UUID,
+    session: SessionDependency,
+    background_tasks: BackgroundTasks,
+):
+    _log.debug("Getting a ingredient image")
+    if not (ingredient := session.get(Ingredient, ingredient_id)):
+        return IngredientNotFoundResponse
+    if (object_name := ingredient.object_name) is None:
+        return BadRequestResponse(f"ingredient={ingredient_id} does not have an image")
+    with download_object(object_name, with_cleanup=False) as f:
+        return SelfDestructFileResponse(
+            f,
+            # media_type=FileType.JPEG,
+            media_type="image/png",
+            background_tasks=background_tasks,
+        )
 
 
 @router_v1.patch("/{ingredient_id}", response_model=IngredientPublic)

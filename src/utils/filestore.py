@@ -20,7 +20,7 @@ class FileType(StrEnum):
     CSV = "application/csv"
     JSON = "application/json"
     GZ = "application/gzip"
-    JPEG = "application/jpeg"
+    JPEG = JPG = "application/jpeg"
 
     def __get__(self, *_) -> str:
         """to be able to use `FileType.PDF` and get "application/pdf" """
@@ -154,29 +154,33 @@ def upload_to_filestore(file: BinaryIO, obj_name: str, filetype: str):
 class download_object:
     """context manager for downloading an object from a filestore"""
 
-    def __init__(self, object_name: str):
+    def __init__(self, object_name: str, with_cleanup: bool = True):
         self._filestore = FileStore()
-        self.object_name = object_name
+        self._object_name = object_name
+        self._with_cleanup = with_cleanup
 
     def __enter__(self) -> Path:
-        return self._filestore.get_object(object_name=self.object_name)
+        return self._filestore.get_object(object_name=self._object_name)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._filestore.clean_up()
+        if self._with_cleanup:
+            self._filestore.clean_up()
 
 
 class download_objects:
     """context manager for downloading objects from a filestore"""
 
-    def __init__(self, object_names: list[str]):
+    def __init__(self, object_names: list[str], with_cleanup: bool = True):
         self._filestore = FileStore()
-        self.object_names = object_names
+        self._object_names = object_names
+        self._with_cleanup = with_cleanup
 
     def __enter__(self) -> list[Path]:
-        return [self._filestore.get_object(name) for name in self.object_names]
+        return [self._filestore.get_object(name) for name in self._object_names]
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._filestore.clean_up()
+        if self._with_cleanup:
+            self._filestore.clean_up()
 
 
 # exceptions

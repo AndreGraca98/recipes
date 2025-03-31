@@ -24,6 +24,8 @@ class Ingredient(IngredientBase, _CommonBase, table=True):
 
 class IngredientPublic(IngredientBase):
     id: uuid.UUID
+    normalized_name: str
+    object_name: str | None
 
 
 class IngredientCreate(IngredientBase): ...
