@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import BinaryIO
 
 from minio import Minio
 from minio.error import InvalidResponseError, S3Error
@@ -135,6 +136,18 @@ class FileStore:
         """delete downloaded files"""
         for file in self.downloaded_docs:
             file.unlink(missing_ok=True)
+
+
+def upload_to_filestore(file: BinaryIO, obj_name: str, filetype: str):
+    # need to store the file temporarily
+    p = tmp_path()
+    p.write_bytes(file.read())
+
+    filestore = FileStore()
+    filestore.add_object(obj_name, p, filetype)
+
+    # rm the tmp file
+    p.unlink(missing_ok=True)
 
 
 # context managers

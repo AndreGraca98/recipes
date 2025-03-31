@@ -1,14 +1,17 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Query
-from sqlmodel import select
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from sqlmodel import Session, select
 
 from src.models import Ingredient
 from src.models.ingredient import IngredientCreate, IngredientPublic, IngredientUpdate
 from src.routers import _tags
-from src.utils import SessionDependency, getLogger
+from src.utils import SessionDependency, get_session, getLogger
+from src.utils.filestore import FileType, upload_to_filestore
 from src.utils.responses import NotFoundResponse
+
+from .helpers import normalize_str
 
 _log = getLogger(__name__)
 
@@ -32,10 +35,18 @@ async def get_all_ingredients(
 
 @router_v1.post("", response_model=IngredientPublic)
 async def create_an_ingredient(
-    ingredient: IngredientCreate, session: SessionDependency
+    ingredient: IngredientCreate = Depends(),
+    file: UploadFile = File(None),
+    session: Session = Depends(get_session),
 ):
     _log.debug("Creating a ingredient...")
+
     db_ingredient = Ingredient.model_validate(ingredient)
+    if f := file.file:
+        assert (filename := file.filename)
+        upload_to_filestore(f, filename, FileType.JPEG)
+        db_ingredient.object_name = filename
+    db_ingredient.normalized_name = normalize_str(db_ingredient.name)
     session.add(db_ingredient)
     session.commit()
     session.refresh(db_ingredient)
