@@ -13,45 +13,6 @@ from .paths import tmp_path
 _log = getLogger(__name__)
 
 
-class FileStoreError(BaseException):
-    """Something went wrong with the FileStore"""
-
-
-class BucketError(FileStoreError): ...
-
-
-@dataclass
-class BucketDoesNotExistError(FileStoreError):
-    name: str
-
-    def __str__(self) -> str:
-        return self.name
-
-
-class FileError(FileStoreError): ...
-
-
-@dataclass
-class CorruptFileError(FileError):
-    """Our file was corrupt."""
-
-    file_size: int  # in bytes
-    min_size: int  # in bytes
-
-    def __str__(self) -> str:
-        return (
-            f"file size ({self.file_size}) lower than minimum ({self.min_size} bytes)"
-        )
-
-
-@dataclass
-class FileDoesNotExistError(FileError):
-    filename: str
-
-    def __str__(self) -> str:
-        return self.filename
-
-
 class FileType(StrEnum):
     UNKNOWN = "application/octet-stream"
     PDF = "application/pdf"
@@ -176,8 +137,9 @@ class FileStore:
             file.unlink(missing_ok=True)
 
 
+# context managers
 class download_object:
-    """Will download file to local fs and clean up after its no longer needed."""
+    """context manager for downloading an object from a filestore"""
 
     def __init__(self, object_name: str):
         self._filestore = FileStore()
@@ -191,7 +153,7 @@ class download_object:
 
 
 class download_objects:
-    """Will download file to local fs and clean up after its no longer needed."""
+    """context manager for downloading objects from a filestore"""
 
     def __init__(self, object_names: list[str]):
         self._filestore = FileStore()
@@ -202,3 +164,43 @@ class download_objects:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._filestore.clean_up()
+
+
+# exceptions
+class FileStoreError(BaseException):
+    """Something went wrong with the FileStore"""
+
+
+class BucketError(FileStoreError): ...
+
+
+@dataclass
+class BucketDoesNotExistError(FileStoreError):
+    name: str
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class FileError(FileStoreError): ...
+
+
+@dataclass
+class CorruptFileError(FileError):
+    """Our file was corrupt."""
+
+    file_size: int  # in bytes
+    min_size: int  # in bytes
+
+    def __str__(self) -> str:
+        return (
+            f"file size ({self.file_size}) lower than minimum ({self.min_size} bytes)"
+        )
+
+
+@dataclass
+class FileDoesNotExistError(FileError):
+    filename: str
+
+    def __str__(self) -> str:
+        return self.filename
