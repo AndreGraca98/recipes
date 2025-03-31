@@ -25,7 +25,7 @@ async def get_all_ingredients(
     _per_page: Annotated[int, Query(ge=1)] = 25,
 ):
     _log.debug(f"Getting {_per_page} ingredients from page {_page}")
-    q = select(Ingredient).offset(_page).limit(_per_page)
+    q = select(Ingredient).offset(_page * _per_page).limit(_per_page)
     ingredient = session.scalars(q).all()
     return ingredient
 
