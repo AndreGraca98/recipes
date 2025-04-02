@@ -50,7 +50,7 @@ async def create_an_ingredient(
     _log.debug("Creating a ingredient...")
 
     db_ingredient = Ingredient.model_validate(ingredient)
-    if f := file.file:
+    if file and (f := file.file):
         assert (filename := file.filename)
         upload_to_filestore(f, filename, FileType.JPEG)
         db_ingredient.object_name = filename
