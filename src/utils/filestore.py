@@ -1,17 +1,39 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, Iterator
 
 from minio import Minio
+from minio.datatypes import Object
 from minio.error import InvalidResponseError, S3Error
 from minio.helpers import ObjectWriteResult
+from pydantic import BaseModel
 
 from .env import Environment
 from .logger import getLogger
 from .paths import tmp_path
 
 _log = getLogger(__name__)
+
+
+def upload_to_filestore(file: BinaryIO, obj_name: str, filetype: str):
+    # need to store the file temporarily
+    p = tmp_path()
+    p.write_bytes(file.read())
+
+    filestore = FileStore()
+    if filestore.object_exists(obj_name):
+        raise FileAlreadyExistsError(obj_name)
+    filestore.add_object(obj_name, p, filetype)
+
+    # rm the tmp file
+    p.unlink(missing_ok=True)
+
+
+def remove_from_filestore(obj_name: str):
+    filestore = FileStore()
+    filestore.remove_object(obj_name)
 
 
 class FileType(StrEnum):
@@ -25,6 +47,13 @@ class FileType(StrEnum):
     def __get__(self, *_) -> str:
         """to be able to use `FileType.PDF` and get "application/pdf" """
         return self.name
+
+
+class FilestoreObject(BaseModel):
+    bucket_name: str
+    object_name: str
+    content_type: str | None
+    last_modified: datetime | None
 
 
 class FileStore:
@@ -64,7 +93,7 @@ class FileStore:
 
     def add_object(
         self, object_name: str, file_path: Path, file_type: str = FileType.UNKNOWN
-    ):
+    ) -> None:
         if not self.client.bucket_exists(self.bucket):
             if not self.should_create_bucket:
                 raise BucketDoesNotExistError(self.bucket)
@@ -85,12 +114,12 @@ class FileStore:
             bucket_name=self.bucket,
             object_name=object_name,
             file_path=str(file_path.resolve()),
-            content_type=file_type,
+            content_type=str(file_type),
         )
         # sanity check
         assert result.object_name == object_name
 
-    def remove_object(self, object_name: str):
+    def remove_object(self, object_name: str) -> None:
         self.client.remove_object(bucket_name=self.bucket, object_name=object_name)
 
     def get_object(
@@ -98,7 +127,7 @@ class FileStore:
         object_name: str,
         file_path: Path | None = None,
         minimum_file_size: int = 0,
-    ):
+    ) -> Path:
         """Download object to `file_path`. if not provided will
         download to a temporary file"""
         if file_path is None:  # provide our own
@@ -129,25 +158,13 @@ class FileStore:
                 raise  # re-raise error
             return False
 
-    def list_objects(self, dir: str = ""):
+    def list_objects(self, dir: str = "") -> Iterator[Object]:
         return self.client.list_objects(bucket_name=self.bucket, prefix=dir)
 
-    def clean_up(self):
+    def clean_up(self) -> None:
         """delete downloaded files"""
         for file in self.downloaded_docs:
             file.unlink(missing_ok=True)
-
-
-def upload_to_filestore(file: BinaryIO, obj_name: str, filetype: str):
-    # need to store the file temporarily
-    p = tmp_path()
-    p.write_bytes(file.read())
-
-    filestore = FileStore()
-    filestore.add_object(obj_name, p, filetype)
-
-    # rm the tmp file
-    p.unlink(missing_ok=True)
 
 
 # context managers
@@ -188,7 +205,8 @@ class FileStoreError(BaseException):
     """Something went wrong with the FileStore"""
 
 
-class BucketError(FileStoreError): ...
+class BucketError(FileStoreError):
+    """Base filestore bucket error"""
 
 
 @dataclass
@@ -199,13 +217,12 @@ class BucketDoesNotExistError(FileStoreError):
         return self.name
 
 
-class FileError(FileStoreError): ...
+class FileError(FileStoreError):
+    """Base files error"""
 
 
 @dataclass
 class CorruptFileError(FileError):
-    """Our file was corrupt."""
-
     file_size: int  # in bytes
     min_size: int  # in bytes
 
@@ -217,6 +234,14 @@ class CorruptFileError(FileError):
 
 @dataclass
 class FileDoesNotExistError(FileError):
+    filename: str
+
+    def __str__(self) -> str:
+        return self.filename
+
+
+@dataclass
+class FileAlreadyExistsError(FileError):
     filename: str
 
     def __str__(self) -> str:

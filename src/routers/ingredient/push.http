@@ -1,33 +1,56 @@
-### get all ingredients
-GET http://{{host}}:{{port}}
-    /v1/crud/ingredients
+@host=http://{{hostname}}:{{port}}
+@assetsDir=./../../../assets
 
+### get all ingredients
+GET /v1/ingredients
 
 ### post a potato
-POST http://{{host}}:{{port}}
-    /v1/crud/ingredients
+POST /v1/ingredients
     ?name=Potato
 
-### post an onion with an image
-POST http://{{host}}:{{port}}
-    /v1/crud/ingredients
-    ?name=Onion
-    &category=Cat 2
-Content-Type: multipart/form-data; boundary=BOUNDARY
-
---BOUNDARY
-Content-Disposition: form-data; name="file"; filename="onion.jpg"
-Content-Type: image/jpg
-
-< ./onion.jpg
---BOUNDARY
-
-### post some pasta
-POST http://{{host}}:{{port}}
-    /v1/crud/ingredients
+### post some pasta with more information
+POST /v1/ingredients
     ?name=Spaghetti
     &description=Pairs nice with some mushrooms
     &category=Base
 
-### get all ingredients
-GET http://{{host}}:{{port}}/v1/crud/ingredients
+### @test post an onion with an image
+POST /v1/ingredients
+    ?name=Onion
+    &category=Cat 2
+accept: application/json
+Content-Type: multipart/form-data; boundary=BOUNDARY
+
+--BOUNDARY
+Content-Disposition: form-data; name="file"; filename="logo.png"
+Content-Type: image/jpeg
+
+< {{assetsDir}}/onion.jpg
+--BOUNDARY--
+
+> {%
+    // make sure ingredient was created
+    client.assert(response.status === 201, "ingredient was not created")
+    // save ingredient_id for next request
+    client.global.set('ingredient_id', response.body.id);
+%}
+
+### get a specific ingredient
+GET /v1/ingredients/{{ingredient_id}}
+
+### get a specific ingredient image
+GET /v1/ingredients/{{ingredient_id}}/image
+
+### updates an ingredient
+PATCH /v1/ingredients/{{ingredient_id}}
+accept: application/json
+
+{
+    "category": "Cat 1"
+}
+
+### deletes an ingredient
+DELETE /v1/ingredients/{{ingredient_id}}
+
+### gets all ingredient object data from the filestore
+GET /v1/ingredients/filestore-objects

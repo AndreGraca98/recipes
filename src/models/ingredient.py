@@ -33,6 +33,5 @@ class IngredientCreate(IngredientBase): ...
 
 class IngredientUpdate(IngredientBase):
     name: str | None = None
-    normalized_name: str | None = None
     description: str | None = None
     category: str | None = None
