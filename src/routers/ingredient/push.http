@@ -1,0 +1,33 @@
+### get all ingredients
+GET http://{{host}}:{{port}}
+    /v1/crud/ingredients
+
+
+### post a potato
+POST http://{{host}}:{{port}}
+    /v1/crud/ingredients
+    ?name=Potato
+
+### post an onion with an image
+POST http://{{host}}:{{port}}
+    /v1/crud/ingredients
+    ?name=Onion
+    &category=Cat 2
+Content-Type: multipart/form-data; boundary=BOUNDARY
+
+--BOUNDARY
+Content-Disposition: form-data; name="file"; filename="onion.jpg"
+Content-Type: image/jpg
+
+< ./onion.jpg
+--BOUNDARY
+
+### post some pasta
+POST http://{{host}}:{{port}}
+    /v1/crud/ingredients
+    ?name=Spaghetti
+    &description=Pairs nice with some mushrooms
+    &category=Base
+
+### get all ingredients
+GET http://{{host}}:{{port}}/v1/crud/ingredients
