@@ -14,6 +14,13 @@ POST /v1/ingredients
     &description=Pairs nice with some mushrooms
     &category=Base
 
+> {%
+    // make sure ingredient was created
+    client.assert(response.status === 201, "ingredient was not created")
+    // save spaghetti_ingredient_id for next request
+    client.global.set('spaghetti_ingredient_id', response.body.id);
+%}
+
 ### @test post an onion with an image
 POST /v1/ingredients
     ?name=Onion
@@ -22,7 +29,7 @@ accept: application/json
 Content-Type: multipart/form-data; boundary=BOUNDARY
 
 --BOUNDARY
-Content-Disposition: form-data; name="file"; filename="logo.png"
+Content-Disposition: form-data; name="file"; filename="onion.jpg"
 Content-Type: image/jpeg
 
 < {{assetsDir}}/onion.jpg
@@ -31,26 +38,41 @@ Content-Type: image/jpeg
 > {%
     // make sure ingredient was created
     client.assert(response.status === 201, "ingredient was not created")
-    // save ingredient_id for next request
-    client.global.set('ingredient_id', response.body.id);
+    // save onion_ingredient_id for next request
+    client.global.set('onion_ingredient_id', response.body.id);
 %}
 
-### get a specific ingredient
-GET /v1/ingredients/{{ingredient_id}}
+### get the onion by the id
+GET /v1/ingredients/{{onion_ingredient_id}}
 
-### get a specific ingredient image
-GET /v1/ingredients/{{ingredient_id}}/image
+### get the onion image
+GET /v1/ingredients/{{onion_ingredient_id}}/image
 
-### updates an ingredient
-PATCH /v1/ingredients/{{ingredient_id}}
+### gets all ingredient object data from the filestore
+GET /v1/ingredients/filestore-objects
+
+### updates the onion data
+PATCH /v1/ingredients/{{onion_ingredient_id}}
 accept: application/json
 
 {
     "category": "Cat 1"
 }
 
-### deletes an ingredient
-DELETE /v1/ingredients/{{ingredient_id}}
+### update the spaghetti image to be the same as the onion
+PATCH /v1/ingredients/{{spaghetti_ingredient_id}}
+accept: application/json
+
+{
+    "object_name": "onion.jpg"
+}
+
+
+### deletes the onion
+DELETE /v1/ingredients/{{onion_ingredient_id}}
+
+### check that the spaghetti object name was set to null
+GET /v1/ingredients/{{spaghetti_ingredient_id}}
 
 ### gets all ingredient object data from the filestore
 GET /v1/ingredients/filestore-objects

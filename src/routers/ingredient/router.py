@@ -14,8 +14,6 @@ from src.models.ingredient import (
 from src.routers import _tags
 from src.utils import SessionDependency, get_session, getLogger
 from src.utils.filestore import (
-    FileStore,
-    FilestoreObject,
     FileType,
     download_object,
     remove_from_filestore,
@@ -72,16 +70,6 @@ async def create_an_ingredient(
     return db_ingredient
 
 
-@router_v1.get("/filestore-objects", response_model=list[FilestoreObject])
-async def get_filestore_objects():
-    """Get names from the ingredient images stored on the filestore.
-    Note: this endpoint needs to be defined before get_an_ingredient,
-    otherwise fastapi won't be able to differentiate between uuids
-    and this endpoint"""
-    filestore = FileStore()
-    return list(filestore.list_objects())
-
-
 @router_v1.get("/{ingredient_id}", response_model=IngredientPublic)
 async def get_an_ingredient(ingredient_id: uuid.UUID, session: SessionDependency):
     _log.debug("Getting a ingredient...")
@@ -135,7 +123,7 @@ async def delete_an_ingredient(ingredient_id: uuid.UUID, session: SessionDepende
             .where(Ingredient.object_name == object_name)  # type: ignore
             .values(object_name=None)
         )
-        session.scalars(q)
+        session.execute(q)
     session.delete(ingredient_db)
     session.commit()
     return {"ok": True}

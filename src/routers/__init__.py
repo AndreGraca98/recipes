@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from ._tags import TAGS_METADATA  # noqa: F401
+from .filestore import router_v1 as filestore_router_v1
 from .ingredient import router_v1 as ingredient_router_v1
 
 # from .recipe import crud_router_v1 as recipe_crud_router_v1
@@ -12,6 +13,7 @@ __all__ = ["TAGS_METADATA", "ROUTERS"]
 
 ROUTERS: list[APIRouter] = [
     ingredient_router_v1,
+    filestore_router_v1,
     # recipe_crud_router_v1,
     # recipe_router_v1,
     # recipe_ingredient_crud_router_v1,

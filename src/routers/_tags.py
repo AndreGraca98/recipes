@@ -20,3 +20,4 @@ V1 = _Tag("V1", "Version 1 of the API").name
 Recipe = _Tag("Recipe", "Recipe").name
 RecipeIngredient = _Tag("RecipeIngredient", "RecipeIngredient").name
 Ingredient = _Tag("Ingredients", "Ingredients").name
+Filestore = _Tag("Filestore", "Filestore").name
