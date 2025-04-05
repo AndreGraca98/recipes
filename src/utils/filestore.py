@@ -18,15 +18,13 @@ _log = getLogger(__name__)
 
 
 def upload_to_filestore(file: BinaryIO, obj_name: str, filetype: str):
-    # need to store the file temporarily
-    p = tmp_path()
-    p.write_bytes(file.read())
-
     filestore = FileStore()
     if filestore.object_exists(obj_name):
         raise FileAlreadyExistsError(obj_name)
+    # need to store the file temporarily
+    p = tmp_path()
+    p.write_bytes(file.read())
     filestore.add_object(obj_name, p, filetype)
-
     # rm the tmp file
     p.unlink(missing_ok=True)
 
@@ -108,7 +106,7 @@ class FileStore:
                     "bucket succeeded and you already own it."
                 )
                 if (code != err.code) or (message != err.message):
-                    raise  # re-raise error
+                    raise err  # re-raise error
 
         result: ObjectWriteResult = self.client.fput_object(
             bucket_name=self.bucket,
@@ -146,7 +144,7 @@ class FileStore:
 
         # at least x bytes
         if (filesize := file_path.stat().st_size) < minimum_file_size:
-            raise CorruptFileError(filesize, minimum_file_size)
+            raise CorruptFileError(object_name, filesize, minimum_file_size)
         return file_path
 
     def object_exists(self, object_name: str) -> bool:
@@ -201,7 +199,7 @@ class download_objects:
 
 
 # exceptions
-class FileStoreError(BaseException):
+class FileStoreError(Exception):
     """Something went wrong with the FileStore"""
 
 
@@ -217,8 +215,14 @@ class BucketDoesNotExistError(FileStoreError):
         return self.name
 
 
+@dataclass
 class FileError(FileStoreError):
     """Base files error"""
+
+    filename: str
+
+    def __str__(self) -> str:
+        return self.filename
 
 
 @dataclass
@@ -233,16 +237,8 @@ class CorruptFileError(FileError):
 
 
 @dataclass
-class FileDoesNotExistError(FileError):
-    filename: str
-
-    def __str__(self) -> str:
-        return self.filename
+class FileDoesNotExistError(FileError): ...
 
 
 @dataclass
-class FileAlreadyExistsError(FileError):
-    filename: str
-
-    def __str__(self) -> str:
-        return self.filename
+class FileAlreadyExistsError(FileError): ...

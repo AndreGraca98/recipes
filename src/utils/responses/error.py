@@ -74,7 +74,7 @@ def _null_to_dict(value: None | dict) -> dict:
 
 
 # Specialized responses
-class DuplicatedEntry(BadRequestResponse):
+class DuplicatedEntryResponse(BadRequestResponse):
     def __init__(
         self,
         value: str,

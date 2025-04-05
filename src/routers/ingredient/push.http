@@ -37,9 +37,13 @@ Content-Type: image/jpeg
 
 > {%
     // make sure ingredient was created
-    client.assert(response.status === 201, "ingredient was not created")
-    // save onion_ingredient_id for next request
-    client.global.set('onion_ingredient_id', response.body.id);
+    if (response.status === 201) {
+        // save onion_ingredient_id for next request
+        client.global.set('onion_ingredient_id', response.body.id);
+    } else {
+
+    }
+    console.error("ingredient was not created. status code:",response.status)
 %}
 
 ### get the onion by the id

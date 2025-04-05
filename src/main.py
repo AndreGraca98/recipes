@@ -10,7 +10,9 @@ from sqlmodel import SQLModel
 from .routers import ROUTERS, TAGS_METADATA
 from .utils import Environment, getLogger
 from .utils.exception_handlers import handle_integrity_error
+from .utils.filestore import CorruptFileError, FileAlreadyExistsError
 from .utils.responses import ServerExceptionResponse
+from .utils.responses.error import BadRequestResponse
 from .utils.session import engine
 
 _log = getLogger(__name__)
@@ -23,6 +25,10 @@ _log.log(
 swagger_ui_parameters = {
     "defaultModelsExpandDepth": -1,  # Hide models section by default
     "docExpansion": "none",  # Collapse all sections by default
+    "syntaxHighlight": {"theme": "tomorrow-night"},
+    "tryItOutEnabled": True,  # "try it out" enabled by default
+    "requestSnippetsEnabled": True,  # show other snippets
+    "displayRequestDuration": True,
 }
 
 
@@ -62,10 +68,17 @@ async def exception_handling_middleware(request: Request, call_next):
     # except ... as e: # Add other exceptions here. using dataclasses can have custom
     # data passed to the error details
     #     ...
+    except CorruptFileError as e:
+        ctx = dict(
+            filename=e.filename, file_size=e.file_size, expected_min_size=e.min_size
+        )
+        return BadRequestResponse("file was corrupt", ctx)
+    except FileAlreadyExistsError as e:
+        ctx = dict(filename=e.filename)
+        return BadRequestResponse("file already exists", ctx)
     except sqlalchemy.exc.IntegrityError as e:
         return handle_integrity_error(e, ctx)
     except Exception as e:
-        # _log.exception(str(e))
         return ServerExceptionResponse(error=e, error_details=ctx)
 
 

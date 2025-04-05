@@ -3,14 +3,14 @@ import re
 import sqlalchemy
 
 from .logger import getLogger
-from .responses.error import DuplicatedEntry, ServerExceptionResponse
+from .responses.error import DuplicatedEntryResponse, ServerExceptionResponse
 
 _log = getLogger(__name__)
 
 INTEGRITY_ERROR_PATTERN_RESPONSE_MAPPING = {
     re.compile(
         r"\d+, \"Duplicate entry '(?P<value>.*)' for key '(?P<column>.*)'"
-    ): DuplicatedEntry
+    ): DuplicatedEntryResponse
 }
 """Mapping from integrity error regex to a response class."""
 
