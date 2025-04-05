@@ -78,6 +78,24 @@ async def get_an_ingredient(ingredient_id: uuid.UUID, session: SessionDependency
     return ingredient
 
 
+@router_v1.post("/{ingredient_id}/image", response_model=IngredientPublic)
+async def add_an_ingredient_image(
+    ingredient_id: uuid.UUID,
+    session: SessionDependency,
+    file: UploadFile = File(),
+):
+    _log.debug("Getting a ingredient image")
+    if not (db_ingredient := session.get(Ingredient, ingredient_id)):
+        return IngredientNotFoundResponse
+
+    assert (filename := file.filename)
+    _log.debug(f"storing image with {filename = }")
+    upload_to_filestore(file.file, filename, FileType.JPEG)
+    db_ingredient.object_name = filename
+    session.commit()
+    return db_ingredient
+
+
 @router_v1.get("/{ingredient_id}/image")
 async def get_an_ingredient_image(
     ingredient_id: uuid.UUID,

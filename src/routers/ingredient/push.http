@@ -8,6 +8,28 @@ GET /v1/ingredients
 POST /v1/ingredients
     ?name=Potato
 
+> {%
+    // make sure ingredient was created
+    client.assert(response.status === 201, "ingredient was not created")
+    // save potato_ingredient_id for next request
+    client.global.set('potato_ingredient_id', response.body.id);
+%}
+
+### add a potato image
+POST /v1/ingredients/{{potato_ingredient_id}}/image
+Content-Type: multipart/form-data; boundary=BOUNDARY
+
+--BOUNDARY
+Content-Disposition: form-data; name="file"; filename="potato.jpg"
+Content-Type: image/jpeg
+
+< {{assetsDir}}/potato.jpg
+--BOUNDARY--
+
+### get the potato image
+GET /v1/ingredients/{{potato_ingredient_id}}/image
+
+
 ### post some pasta with more information
 POST /v1/ingredients
     ?name=Spaghetti
@@ -70,6 +92,9 @@ accept: application/json
 {
     "object_name": "onion.jpg"
 }
+
+### get the spaghetti image
+GET /v1/ingredients/{{spaghetti_ingredient_id}}/image
 
 
 ### deletes the onion
