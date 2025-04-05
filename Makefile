@@ -1,33 +1,17 @@
-.PHONY: help env setup install install-pre-commit-hooks up down watch lint test clean deep-clean
+.PHONY: env up down lint test clean deep-clean help
 .DEFAULT_GOAL := help
 .SILENT:
 
 env: ## Create the environment file
 	test -f .env || cp .env.template .env
 
-setup: env ## Setup the project
-	chmod +x scripts/setup.sh && ./scripts/setup.sh
-	$(MAKE) install
-
-install: ## Install the dependencies
-	pdm sync -G:all
-	$(MAKE) install-pre-commit-hooks
-
-install-pre-commit-hooks: ## Install pre-commit hooks
-	pdm run pre-commit install
-	pdm run pre-commit install --hook-type pre-push
-
 up: env ## Start the container
 	@echo "Starting the container..."
-	docker compose up -d --build
+	docker compose up -d --build --remove-orphans
 
 down: env ## Stop the container
 	@echo "Stopping the container..."
 	docker compose down --remove-orphans
-
-watch: env ## Watch for changes and rebuild
-	@echo "Watching for changes..."
-	docker compose watch
 
 lint: ## Lint the code
 	@echo "Linting the code..."
