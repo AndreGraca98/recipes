@@ -44,7 +44,7 @@ class FileType(StrEnum):
 
     def __get__(self, *_) -> str:
         """to be able to use `FileType.PDF` and get "application/pdf" """
-        return self.name
+        return self.value
 
 
 class FilestoreObject(BaseModel):
