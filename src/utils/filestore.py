@@ -50,7 +50,6 @@ class FileType(StrEnum):
 class FilestoreObject(BaseModel):
     bucket_name: str
     object_name: str
-    content_type: str | None
     last_modified: datetime | None
 
 

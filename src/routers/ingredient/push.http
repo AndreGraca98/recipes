@@ -53,7 +53,7 @@ GET /v1/ingredients/{{onion_ingredient_id}}
 GET /v1/ingredients/{{onion_ingredient_id}}/image
 
 ### gets all ingredient object data from the filestore
-GET /v1/ingredients/filestore-objects
+GET /v1/filestore-objects
 
 ### updates the onion data
 PATCH /v1/ingredients/{{onion_ingredient_id}}
@@ -79,4 +79,4 @@ DELETE /v1/ingredients/{{onion_ingredient_id}}
 GET /v1/ingredients/{{spaghetti_ingredient_id}}
 
 ### gets all ingredient object data from the filestore
-GET /v1/ingredients/filestore-objects
+GET /v1/filestore-objects
